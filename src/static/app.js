@@ -12,49 +12,60 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Clear loading message
       activitiesList.innerHTML = "";
+        activitySelect.innerHTML = '<option value="">-- Select an activity --</option>';
 
-      // Populate activities list
-      Object.entries(activities).forEach(([name, details]) => {
-        const activityCard = document.createElement("div");
-        activityCard.className = "activity-card";
+        // Get filter/sort/search values
+        const searchValue = document.getElementById("activity-search")?.value?.toLowerCase() || "";
+        const sortValue = document.getElementById("activity-sort")?.value || "name-asc";
 
-        const spotsLeft =
-          details.max_participants - details.participants.length;
+        // Filter and sort activities
+        let filtered = Object.entries(activities)
+          .filter(([name]) => name.toLowerCase().includes(searchValue))
+          .sort((a, b) => {
+            if (sortValue === "name-asc") return a[0].localeCompare(b[0]);
+            if (sortValue === "name-desc") return b[0].localeCompare(a[0]);
+            return 0;
+          });
 
-        // Create participants HTML with delete icons instead of bullet points
-        const participantsHTML =
-          details.participants.length > 0
-            ? `<div class="participants-section">
-              <h5>Participants:</h5>
-              <ul class="participants-list">
-                ${details.participants
-                  .map(
-                    (email) =>
-                      `<li><span class="participant-email">${email}</span><button class="delete-btn" data-activity="${name}" data-email="${email}">❌</button></li>`
-                  )
-                  .join("")}
-              </ul>
-            </div>`
-            : `<p><em>No participants yet</em></p>`;
+        filtered.forEach(([name, details]) => {
+          const activityCard = document.createElement("div");
+          activityCard.className = "activity-card";
 
-        activityCard.innerHTML = `
-          <h4>${name}</h4>
-          <p>${details.description}</p>
-          <p><strong>Schedule:</strong> ${details.schedule}</p>
-          <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
-          <div class="participants-container">
-            ${participantsHTML}
-          </div>
-        `;
+          const spotsLeft = details.max_participants - details.participants.length;
 
-        activitiesList.appendChild(activityCard);
+          const participantsHTML =
+            details.participants.length > 0
+              ? `<div class="participants-section">
+                  <h5>Participants:</h5>
+                  <ul class="participants-list">
+                    ${details.participants
+                      .map(
+                        (email) =>
+                          `<li><span class="participant-email">${email}</span><button class="delete-btn" data-activity="${name}" data-email="${email}">❌</button></li>`
+                      )
+                      .join("")}
+                  </ul>
+                </div>`
+              : `<p><em>No participants yet</em></p>`;
 
-        // Add option to select dropdown
-        const option = document.createElement("option");
-        option.value = name;
-        option.textContent = name;
-        activitySelect.appendChild(option);
-      });
+          activityCard.innerHTML = `
+            <h4>${name}</h4>
+            <p>${details.description}</p>
+            <p><strong>Schedule:</strong> ${details.schedule}</p>
+            <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
+            <div class="participants-container">
+              ${participantsHTML}
+            </div>
+          `;
+
+          activitiesList.appendChild(activityCard);
+
+          // Add option to select dropdown
+          const option = document.createElement("option");
+          option.value = name;
+          option.textContent = name;
+          activitySelect.appendChild(option);
+        });
 
       // Add event listeners to delete buttons
       document.querySelectorAll(".delete-btn").forEach((button) => {
@@ -156,5 +167,9 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // Initialize app
-  fetchActivities();
+    fetchActivities();
+
+    // Add listeners for search and sort
+    document.getElementById("activity-search")?.addEventListener("input", fetchActivities);
+    document.getElementById("activity-sort")?.addEventListener("change", fetchActivities);
 });
